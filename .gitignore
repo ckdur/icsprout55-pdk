@@ -3,3 +3,4 @@
 *.tar.bz2
 *.mk
 ics55/*
+.DS_Store
