@@ -147,6 +147,10 @@ $(OPENPDKS_INSTALL_DIR)/checkpoint: $(LIBS_ALL) $(GDS_ALL)
 	cp -r $(DECOMP_DIR_LIB_P)/ics55_LLSC_H7CL $(OPENPDKS_INSTALL_DIR)/libs.ref/
 	cp -r $(DECOMP_DIR_LIB_P)/ics55_LLSC_H7CR $(OPENPDKS_INSTALL_DIR)/libs.ref/
 	cp -r $(DECOMP_DIR_GDS_IO_P)/ICsprout_55LLULP1233_IO_251013 $(OPENPDKS_INSTALL_DIR)/libs.ref/
+	# Same cleanup as the standard cells, plus prefixed helper subcircuits (inv2, nand2, ... clash with
+	# other libraries) and empty subcircuits for the corner / spacer cells (OpenROAD write_cdl)
+	python3 scripts/cdl_convert.py $(DECOMP_DIR_GDS_IO_P)/ICsprout_55LLULP1233_IO_251013/cdl/ICSIOA_N55_3P3.cdl $(OPENPDKS_INSTALL_DIR)/libs.ref/ICsprout_55LLULP1233_IO_251013/cdl/ICSIOA_N55_3P3.cdl \
+		--lef $(DECOMP_DIR_GDS_IO_P)/ICsprout_55LLULP1233_IO_251013/lef/ICSIOA_N55_3P3_1P6M1TM_ecos.lef
 ifneq ($(DECOMP_DIR_LIB_P),$(DECOMP_DIR_GDS_STD_P))
 	cp -r $(DECOMP_DIR_GDS_STD_P)/ics55_LLSC_H7CH $(OPENPDKS_INSTALL_DIR)/libs.ref/
 	cp -r $(DECOMP_DIR_GDS_STD_P)/ics55_LLSC_H7CL $(OPENPDKS_INSTALL_DIR)/libs.ref/
