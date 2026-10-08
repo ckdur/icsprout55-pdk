@@ -126,7 +126,8 @@ dict set ::env(LIB) "nom_ff_n40C_1v32" "\
 "
 
 # --- Excluded cells ------------------------------------------------------------
-# No exclusions. /dev/null satisfies the required-Path check and reads empty.
+# Defaults (no exclusions). /dev/null satisfies the required-Path check and reads empty.
+# The standard cell configs (<library>/config.tcl) point them to their exclude lists.
 set ::env(SYNTH_EXCLUDED_CELL_FILE) "/dev/null"
 set ::env(PNR_EXCLUDED_CELL_FILE) "/dev/null"
 

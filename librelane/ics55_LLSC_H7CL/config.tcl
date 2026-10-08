@@ -47,6 +47,13 @@ set ::env(DPL_CELL_PADDING) 0
 
 set ::env(CELL_PAD_EXCLUDE) [list "FILLCAP*H7R" "TIEHIH7R" "TIELOH7R"]
 
+# --- Excluded cells --------------------------------------------------------------
+# Cells whose layout does not match their CDL in the KLayout LVS regression
+# (klayout/tech/testing/golden/lvs_stdcell_*.json, plain and _M2 GDS).
+# Synthesis and place & route must not use them. Overrides the /dev/null of config.tcl.
+set ::env(SYNTH_EXCLUDED_CELL_FILE) "$::env(PDK_ROOT)/$::env(PDK)/libs.tech/librelane/$::env(STD_CELL_LIBRARY)/synth_exclude.cells"
+set ::env(PNR_EXCLUDED_CELL_FILE) "$::env(PDK_ROOT)/$::env(PDK)/libs.tech/librelane/$::env(STD_CELL_LIBRARY)/pnr_exclude.cells"
+
 # --- PDN -------------------------------------------------------------------------
 set ::env(PDN_RAIL_WIDTH) 0.16
 
