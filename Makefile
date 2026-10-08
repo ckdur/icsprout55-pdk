@@ -155,9 +155,12 @@ endif
 	mkdir -p $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CH/spice
 	mkdir -p $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CL/spice
 	mkdir -p $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CR/spice
-	python3 scripts/cdl_to_spice.py $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CH/cdl/ics55_LLSC_H7CH.cdl $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CH/spice/ics55_LLSC_H7CH.spice
-	python3 scripts/cdl_to_spice.py $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CL/cdl/ics55_LLSC_H7CL.cdl $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CL/spice/ics55_LLSC_H7CL.spice
-	python3 scripts/cdl_to_spice.py $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CR/cdl/ics55_LLSC_H7CR.cdl $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CR/spice/ics55_LLSC_H7CR.spice
+	python3 scripts/cdl_convert.py $(DECOMP_DIR_GDS_STD_P)/ics55_LLSC_H7CH/cdl/ics55_LLSC_H7CH.cdl $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CH/cdl/ics55_LLSC_H7CH.cdl
+	python3 scripts/cdl_convert.py $(DECOMP_DIR_GDS_STD_P)/ics55_LLSC_H7CL/cdl/ics55_LLSC_H7CL.cdl $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CL/cdl/ics55_LLSC_H7CL.cdl
+	python3 scripts/cdl_convert.py $(DECOMP_DIR_GDS_STD_P)/ics55_LLSC_H7CR/cdl/ics55_LLSC_H7CR.cdl $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CR/cdl/ics55_LLSC_H7CR.cdl
+	python3 scripts/cdl_to_spice.py $(DECOMP_DIR_GDS_STD_P)/ics55_LLSC_H7CH/cdl/ics55_LLSC_H7CH.cdl $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CH/spice/ics55_LLSC_H7CH.spice
+	python3 scripts/cdl_to_spice.py $(DECOMP_DIR_GDS_STD_P)/ics55_LLSC_H7CL/cdl/ics55_LLSC_H7CL.cdl $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CL/spice/ics55_LLSC_H7CL.spice
+	python3 scripts/cdl_to_spice.py $(DECOMP_DIR_GDS_STD_P)/ics55_LLSC_H7CR/cdl/ics55_LLSC_H7CR.cdl $(OPENPDKS_INSTALL_DIR)/libs.ref/ics55_LLSC_H7CR/spice/ics55_LLSC_H7CR.spice
 	cp -r prtech $(OPENPDKS_INSTALL_DIR)/libs.ref/
 	cp -r klayout $(OPENPDKS_INSTALL_DIR)/libs.tech/
 	cp -r librelane $(OPENPDKS_INSTALL_DIR)/libs.tech/
