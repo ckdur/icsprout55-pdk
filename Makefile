@@ -4,7 +4,29 @@
 ORGS_NAME := openecos-projects
 REPO_NAME := icsprout55-pdk
 
-OPENPDKS_INSTALL_DIR ?= $(abspath .)/ics55
+# Name of the installed PDK directory; also the value of $PDK for the open
+# tools (librelane --pdk ics55, PDK_ROOT=<this repo>).
+PDK_NAME ?= ics55
+OPENPDKS_INSTALL_DIR ?= $(abspath .)/$(PDK_NAME)
+
+# =============================================================================
+# Private standard cells (ICsprout_55LLULP1225_STD_0818, "ICsprout55 SC9T")
+# =============================================================================
+# Not part of the release, so they are only installed when the vendor directory
+# is found next to this repository. Override with PRIVATE_STD_ROOT=<dir>.
+PRIVATE_STD_ROOT ?= $(firstword $(wildcard $(abspath ..)/pdk/ICsprout_55LLULP1225_STD_0818 \
+                                           $(abspath ..)/ICsprout_55LLULP1225_STD_0818))
+
+# Liberty corners to install. The vendor lib/ directory is ~15 GB per library
+# (CCS .lib plus .db for all 16 corners), so only the NLDM files of the corners
+# in librelane/config.tcl (STA_CORNERS) are copied.
+# PRIVATE_STD_LIBERTY=all installs every NLDM corner instead (~1.8 GB per library).
+PRIVATE_STD_LIBERTY ?= used
+PRIVATE_STD_CORNERS := tt_v1p2_25c ss_v1p08_125c ff_v1p32_-40c
+# <vendor directory>:<installed library name> (= the view file basename)
+PRIVATE_STD_ENTRIES := ICsprout55_SC9T_BASIC_SVT:ICsprout55_9TSVT_basic \
+                       ICsprout55_SC9T_BASIC_HVT:ICsprout55_9THVT_basic \
+                       ICsprout55_SC9T_BASIC_LVT:ICsprout55_9TLVT_basic
 
 PROXY_URL ?= https://gh-proxy.org/
 PROXY_USE ?= false
@@ -31,7 +53,7 @@ DECOMP_DIR_GDS       := $(patsubst %_gds.tar.bz2, $(DECOMP_DIR_GDS_STD_P)/%/gds,
 
 DECOMP_DIR := $(DECOMP_DIR_LIB) $(DECOMP_DIR_GDS)
 
-.PHONY: start download unzip clean-bz2 clean-dir
+.PHONY: start download unzip clean-bz2 clean-dir openpdk clean-openpdk private-std
 
 $(RELEASE_FILE):
 	@echo "\n[download] getting release info for $(RELEASE_TAG)"
@@ -150,7 +172,7 @@ $(OPENPDKS_INSTALL_DIR)/checkpoint: $(LIBS_ALL) $(GDS_ALL)
 	# Same cleanup as the standard cells, plus prefixed helper subcircuits (inv2, nand2, ... clash with
 	# other libraries) and empty subcircuits for the corner / spacer cells (OpenROAD write_cdl)
 	python3 scripts/cdl_convert.py $(DECOMP_DIR_GDS_IO_P)/ICsprout_55LLULP1233_IO_251013/cdl/ICSIOA_N55_3P3.cdl $(OPENPDKS_INSTALL_DIR)/libs.ref/ICsprout_55LLULP1233_IO_251013/cdl/ICSIOA_N55_3P3.cdl \
-		--lef $(DECOMP_DIR_GDS_IO_P)/ICsprout_55LLULP1233_IO_251013/lef/ICSIOA_N55_3P3_1P6M1TM_ecos.lef
+		--lef $(DECOMP_DIR_GDS_IO_P)/ICsprout_55LLULP1233_IO_251013/lef/ICSIOA_N55_3P3_1P6M1TM_openpdk.lef
 ifneq ($(DECOMP_DIR_LIB_P),$(DECOMP_DIR_GDS_STD_P))
 	cp -r $(DECOMP_DIR_GDS_STD_P)/ics55_LLSC_H7CH $(OPENPDKS_INSTALL_DIR)/libs.ref/
 	cp -r $(DECOMP_DIR_GDS_STD_P)/ics55_LLSC_H7CL $(OPENPDKS_INSTALL_DIR)/libs.ref/
@@ -171,7 +193,45 @@ endif
 	cp -r magic $(OPENPDKS_INSTALL_DIR)/libs.tech/
 	cp -r netgen $(OPENPDKS_INSTALL_DIR)/libs.tech/
 	cp -r ngspice $(OPENPDKS_INSTALL_DIR)/libs.tech/
+	cp -r hspice $(OPENPDKS_INSTALL_DIR)/libs.tech/
+	$(MAKE) private-std
+	find $(OPENPDKS_INSTALL_DIR) -name .DS_Store -delete || true
 	touch $@
+
+# The private standard cells, installed only when PRIVATE_STD_ROOT exists.
+# Same views and the same CDL/SPICE conversion as the public libraries.
+private-std:
+	@if [ -z "$(OPENPDKS_INSTALL_DIR)" ]; then \
+		echo "[private-std] OPENPDKS_INSTALL_DIR is empty"; \
+		exit 1; \
+	fi; \
+	if [ -z "$(PRIVATE_STD_ROOT)" ] || [ ! -d "$(PRIVATE_STD_ROOT)" ]; then \
+		echo "[private-std] not found, skipping (set PRIVATE_STD_ROOT to install the 9-track libraries)"; \
+		exit 0; \
+	fi; \
+	echo "[private-std] installing from $(PRIVATE_STD_ROOT)"; \
+	for entry in $(PRIVATE_STD_ENTRIES); do \
+		src="$(PRIVATE_STD_ROOT)/$${entry%%:*}/0.1"; \
+		lib="$${entry##*:}"; \
+		lib_base="$${lib%_basic}"; \
+		dst="$(OPENPDKS_INSTALL_DIR)/libs.ref/$$lib"; \
+		if [ ! -d "$$src" ]; then echo "[private-std]   skipping $$lib: $$src not found"; continue; fi; \
+		echo "[private-std]   $$lib"; \
+		rm -rf "$$dst"; \
+		mkdir -p "$$dst/cdl" "$$dst/spice" "$$dst/liberty"; \
+		for view in gds lef verilog cell_list; do \
+			[ -d "$$src/$$view" ] && cp -r "$$src/$$view" "$$dst/$$view"; \
+		done; \
+		if [ "$(PRIVATE_STD_LIBERTY)" = "all" ]; then \
+			cp "$$src"/lib/*_nldm.lib "$$dst/liberty/"; \
+		else \
+			for corner in $(PRIVATE_STD_CORNERS); do \
+				cp "$$src/lib/$${lib_base}_$${corner}_basic_nldm.lib" "$$dst/liberty/"; \
+			done; \
+		fi; \
+		python3 scripts/cdl_convert.py "$$src/cdl/$$lib.cdl" "$$dst/cdl/$$lib.cdl"; \
+		python3 scripts/cdl_to_spice.py "$$src/cdl/$$lib.cdl" "$$dst/spice/$$lib.spice"; \
+	done
 
 openpdk: $(OPENPDKS_INSTALL_DIR)/checkpoint
 
